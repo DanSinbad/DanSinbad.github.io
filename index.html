@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Kitchen Timers App</title>
+      <style>
+	   #add-timer-btn {
+  display: block;
+  margin: 0 auto;
+  background-color: green;
+  color: white;
+  font-size: 1.0em;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+         body {
+         background-image: url("background.jpg");
+         background-size: cover;
+         font-family: Arial, sans-serif;
+         }
+         h1 {
+         text-align: center;
+         color: white;
+         text-shadow: 1px 1px 1px black;
+         }
+         #timers {
+         display: flex;
+         flex-wrap: wrap;
+         justify-content: center;
+         }
+         .timer {
+         margin: 20px;
+         padding: 20px;
+         background-color: white;
+         border-radius: 10px;
+         box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+         text-align: center;
+         }
+         .timer h3 {
+         margin-top: 0;
+         }
+         .timer p {
+         font-size: 2em;
+         margin-bottom: 5px;
+         }
+         .timer img {
+         width: 50px;
+         height: 50px;
+         margin-right: 10px;
+         }
+         .timer button {
+         margin-top: 10px;
+         padding: 5px 10px;
+         background-color: #ff4136;
+         color: white;
+         border: none;
+         border-radius: 5px;
+         font-size: 1em;
+         cursor: pointer;
+         }
+         .timer button:hover {
+         background-color: #e63933;
+         }
+      </style>
+   </head>
+   <body>
+      <h1>Kitchen Timers</h1>
+      <div id="timers"></div>
+      <button id="add-timer-btn">Add Timer</button>
+      <audio id="alarm-sound" src="alarm-sound.mp3"></audio>
+      <script>
+         let timers = [];
+         function createTimer() {
+             let name = prompt("Enter timer name:");
+             let duration = prompt("Enter timer duration (in minutes):");
+             let timer = { name: name, duration: duration, endTime: new Date().getTime() + duration * 60 * 1000, intervalId: null, notified: false };
+             timers.push(timer);
+             renderTimers();
+             startTimerInterval(timer);
+         }
+         
+         function startTimerInterval(timer) {
+    timer.intervalId = setInterval(function() {
+        let timeLeft = (timer.endTime - new Date().getTime()) / 1000;
+        if (timeLeft <= 0) {
+            clearInterval(timer.intervalId);
+            timeLeft = 0; // set timeLeft to 0 if it is negative
+            if (!timer.notified) {
+                showNotification(timer.name);
+                timer.notified = true;
+            }
+            playAlarmSound();
+            renderTimers();
+        } else {
+            renderTimers();
+        }
+    }, 1000);
+}
+         
+         function renderTimers() {
+         let timersHtml = "";
+         for (let i = 0; i < timers.length; i++) {
+         let timer = timers[i];
+         let timeLeft = (timer.endTime - new Date().getTime()) / 1000;
+         if (timeLeft > 0 || timer.intervalId !== null) {
+            let minutesLeft = Math.floor(timeLeft / 60);
+            let secondsLeft = Math.floor(timeLeft % 60);
+            let buttonCaption = "Remove";
+            let buttonAction = `removeTimer(${i})`;
+            if (timeLeft <= 0) {
+                buttonCaption = "!!!READY!!!";
+            }
+            timersHtml += `<div class="timer"><img src="timer.jpg"/><h3>${timer.name}</h3><p>${minutesLeft}:${
+                secondsLeft < 10 ? "0" + secondsLeft : secondsLeft
+            }</p><button onclick="${buttonAction}"${1 < 1 ? ' disabled' : ''}>${buttonCaption}</button></div>`;
+         }
+         }
+         document.getElementById("timers").innerHTML = timersHtml;
+         }
+         
+         
+         function playAlarmSound() {
+             let alarmSound = document.getElementById("alarm-sound");
+             alarmSound.play();
+             alarmSound.onended = function () {
+                 alarmSound.pause();
+                 alarmSound.currentTime = 0;
+                 if (timers.length > 0) {
+                     showNotification(timers[0].name);
+                     timers[0].notified = true;
+                 }
+             };
+         }
+         function removeTimer(index) {
+             let timer = timers[index];
+             clearInterval(timer.intervalId); // added line
+             document.getElementById("alarm-sound").pause();
+             document.getElementById("alarm-sound").currentTime = 0;
+             timers.splice(index, 1);
+             renderTimers();
+         }
+         function showNotification(name) {
+             if ("Notification" in window) {
+                 var notification = new Notification(name + " has ended!");
+                 notification.addEventListener("close", function () {
+                     document.getElementById("alarm-sound").pause();
+                     document.getElementById("alarm-sound").currentTime = 0;
+                 });
+             }
+         }
+         
+         document.getElementById("add-timer-btn").addEventListener("click", createTimer);
+      </script>
+   </body>
+</html>
